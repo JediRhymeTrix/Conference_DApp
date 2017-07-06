@@ -291,6 +291,21 @@ window.App = {
         }).catch(function(e) {
             console.log(e)
         })
+    },
+
+    getVal: function(rating) {
+        var self = this
+        var count = 0
+        Conference.deployed().then(function(instance) {
+            conference = instance
+            conference.ratings.call(rating)
+                .then(
+                    function(cnt) {
+                        console.log(count = cnt.toNumber())
+                    }) // end of conference destroy
+        }).catch(function(e) {
+            console.log(e)
+        })
     }
 
 }
@@ -354,7 +369,7 @@ window.addEventListener('load', function() {
     $('#setRating').click(function() {
         var val = $('#rating').text()
         var buyerAddress = $('#ratingAddress').val()
-        $.drawRatingGraph() // here for testing
+            // $.drawRatingGraph() // here for testing
 
         if (buyerAddress.length != 42)
             $('#ratingResult').html('Please enter a valid address')
@@ -382,15 +397,21 @@ window.addEventListener('load', function() {
     $.drawRatingGraph = function() {
         $('#chartdiv').show();
 
+        var arrayVals = []
+
+        for (var i = 0; i < 6; i++) {
+            arrayVals.push(App.getVal(i))
+        }
+
         //TODO: replace dummy graph with working logic for ratings graph
         $.jqplot('chartdiv', [
             [
-                [0, 20],
-                [1, 60],
-                [2, 75],
-                [3, 32],
-                [4, 85],
-                [5, 200]
+                [0, arrayVals[0]],
+                [1, arrayVals[1]],
+                [2, arrayVals[2]],
+                [3, arrayVals[3]],
+                [4, arrayVals[4]],
+                [5, arrayVals[5]]
             ]
         ])
     }
