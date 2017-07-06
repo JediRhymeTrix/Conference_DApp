@@ -3,8 +3,11 @@ pragma solidity ^ 0.4 .4;
 contract Conference {
   address public organizer;
   address public speaker;
+
   mapping(address => uint) public registrantsPaid;
-  mapping(address => uint) public ratings;
+  mapping(address => uint) public ratingGiven;
+  mapping(uint => uint) public ratings;
+
   uint public quota;
   uint public price;
 
@@ -30,7 +33,7 @@ contract Conference {
   }
 
   function changeLocation(string newLocation) public {
-    if(msg.sender != organizer) {
+    if (msg.sender != organizer) {
       return;
     }
 
@@ -45,7 +48,6 @@ contract Conference {
     numRegistrants++;
     return true;
   }
-
 
   function buyMultipleTickets(uint num) public payable returns(bool success) {
     if (numRegistrants >= quota) {
@@ -71,11 +73,16 @@ contract Conference {
   }
 
   function setRating(uint rating) public {
-    if(registrantsPaid[msg.sender] == uint(0x0)) {
+    if (msg.sender == organizer || msg.sender == speaker || registrantsPaid[msg.sender] == uint(0x0) || ratingGiven[msg.sender] != uint(0x0)) {
       return;
     }
 
-    ratings[msg.sender] = rating;
+    if (ratings[rating] == uint(0x0)) {
+      ratings[rating] = 0;
+    }
+
+    ratings[rating] = ratings[rating] + 1;
+    ratingGiven[msg.sender] = rating;
   }
 
   function destroy() { // so funds not locked in contract forever

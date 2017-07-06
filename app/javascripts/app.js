@@ -246,26 +246,35 @@ window.App = {
 
     setRating: function(buyerAddress, rating) {
         var self = this
+        var initial_rating
         Conference.deployed().then(function(instance) {
             conference = instance
-            conference.setRating(rating, {
-                from: buyerAddress,
-            }).then(
-                function() {
-                    return conference.ratings.call(buyerAddress)
-                }).then(
-                function(contract_rating) {
-                    var msgResult
-                    if (contract_rating.toNumber() == rating) {
-                        msgResult = 'Rating submitted'
-                        $.drawRatingGraph()
-                    } else {
-                        msgResult = 'Rating submission failed'
-                    }
-                    $('#ratingResult').html(msgResult)
+            conference.ratings.call(rating)
+                .then(
+                    function(init_rat) {
+                        console.log(init_rat)
+                        initial_rating = init_rat.toNumber()
+                    }).then(
+                    conference.setRating(rating, {
+                        from: buyerAddress,
+                    })).then(
+                    function() {
+                        return conference.ratings.call(rating)
+                            .then(
+                                function(contract_rating) {
+                                    var msgResult
+                                    console.log(contract_rating.toNumber())
+                                    if (contract_rating.toNumber() - initial_rating == 1) {
+                                        msgResult = 'Rating submitted'
+                                        $.drawRatingGraph()
+                                    } else {
+                                        msgResult = 'Rating submission failed'
+                                    }
+                                    $('#ratingResult').html(msgResult)
+                                })
+                    }).catch(function(e) {
+                    console.log(e)
                 })
-        }).catch(function(e) {
-            console.log(e)
         })
     },
 
