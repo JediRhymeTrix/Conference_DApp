@@ -72,7 +72,7 @@ window.App = {
                     return conference.organizer.call()
                 }).then(
                 function(organizer) {
-                    console.log("organizer " + organizer);
+                    // console.log("organizer " + organizer);
                     $('input#confOrganizer').val(organizer)
                     return conference.numRegistrants.call()
                 }).then(
@@ -246,36 +246,50 @@ window.App = {
 
     setRating: function(buyerAddress, rating) {
         var self = this
-        var initial_rating
+        var initial_rating = rating
+        console.log('initial rating: ' + initial_rating)
+        Conference.deployed().then(function(instance) {
+            conference = instance
+            conference.setRating(rating, {
+                from: buyerAddress,
+            }).then(
+                function() {
+                    return conference.ratingGiven.call(buyerAddress)
+                        .then(
+                            function(contract_rating) {
+                                var msgResult
+                                console.log('contract rating: ' + contract_rating.toNumber())
+                                if (contract_rating.toNumber() == initial_rating) {
+                                    msgResult = 'Rating submitted'
+                                    $.drawRatingGraph()
+                                } else {
+                                    msgResult = 'Rating submission failed'
+                                }
+                                $('#ratingResult').html(msgResult)
+                            })
+                }).catch(function(e) {
+                console.log(e)
+            })
+        })
+    },
+
+    getVal: function(rating) {
+        var self = this
+        var count
         Conference.deployed().then(function(instance) {
             conference = instance
             conference.ratings.call(rating)
                 .then(
-                    function(init_rat) {
-                        console.log(init_rat)
-                        initial_rating = init_rat.toNumber()
-                    }).then(
-                    conference.setRating(rating, {
-                        from: buyerAddress,
-                    })).then(
-                    function() {
-                        return conference.ratings.call(rating)
-                            .then(
-                                function(contract_rating) {
-                                    var msgResult
-                                    console.log(contract_rating.toNumber())
-                                    if (contract_rating.toNumber() - initial_rating == 1) {
-                                        msgResult = 'Rating submitted'
-                                        $.drawRatingGraph()
-                                    } else {
-                                        msgResult = 'Rating submission failed'
-                                    }
-                                    $('#ratingResult').html(msgResult)
-                                })
-                    }).catch(function(e) {
-                    console.log(e)
-                })
+                    function(cnt) { // TODO: Find a way to make this happen synchronously
+                        console.log('cnt: ' + cnt.toNumber())
+                        count = cnt
+                    })
+        }).catch(function(e) {
+            console.log(e)
         })
+
+        console.log('count: ' + count)
+        return count
     },
 
     destroyContract: function() {
@@ -293,21 +307,6 @@ window.App = {
         })
     },
 
-    getVal: function(rating) {
-        var self = this
-        var count = 0
-        Conference.deployed().then(function(instance) {
-            conference = instance
-            conference.ratings.call(rating)
-                .then(
-                    function(cnt) {
-                        console.log(count = cnt.toNumber())
-                    }) // end of conference destroy
-        }).catch(function(e) {
-            console.log(e)
-        })
-    }
-
 }
 
 window.addEventListener('load', function() {
@@ -321,7 +320,10 @@ window.addEventListener('load', function() {
             // fallback - use your fallback strategy (local node / hosted node + in-dapp id mgmt / fail)
         window.web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:8545'))
 
-        var $rateYo = $("#rateYo").rateYo({ "rating": 0.0, "fullStar": true })
+        var $rateYo = $("#rateYo").rateYo({
+            "rating": 0.0,
+            "fullStar": true
+        })
 
         /* set the option `onChange` */
         $rateYo.rateYo("option", "onChange", function() {
@@ -369,7 +371,7 @@ window.addEventListener('load', function() {
     $('#setRating').click(function() {
         var val = $('#rating').text()
         var buyerAddress = $('#ratingAddress').val()
-            // $.drawRatingGraph() // here for testing
+        $.drawRatingGraph() // here for testing
 
         if (buyerAddress.length != 42)
             $('#ratingResult').html('Please enter a valid address')
@@ -400,10 +402,45 @@ window.addEventListener('load', function() {
         var arrayVals = []
 
         for (var i = 0; i < 6; i++) {
+            console.log('index: ' + i)
             arrayVals.push(App.getVal(i))
         }
 
-        //TODO: replace dummy graph with working logic for ratings graph
+        console.log(arrayVals)
+
+        //TODO: Replace test chart with this one:
+
+        /*$.jqplot.config.enablePlugins = true;
+        var s1 = arrayVals;
+        var ticks = [0, 1, 2, 3, 4, 5];
+
+        plot1 = $.jqplot('chartdiv', [s1], {
+            // Only animate if we're not using excanvas (not in IE 7 or IE 8)..
+            animate: !$.jqplot.use_excanvas,
+            seriesDefaults: {
+                renderer: $.jqplot.BarRenderer,
+                pointLabels: {
+                    show: true
+                }
+            },
+            axes: {
+                xaxis: {
+                    renderer: $.jqplot.CategoryAxisRenderer,
+                    ticks: ticks
+                }
+            },
+            highlighter: {
+                show: false
+            }
+        });
+
+        $('#chartdiv').bind('jqplotDataClick',
+            function(ev, seriesIndex, pointIndex, data) {
+                $('#info1').html('series: ' + seriesIndex + ', point: ' + pointIndex + ', data: ' + data);
+            }
+        );*/
+
+        // test chart:
         $.jqplot('chartdiv', [
             [
                 [0, arrayVals[0]],
