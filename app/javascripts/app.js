@@ -285,7 +285,7 @@ window.App = {
                         var counts = []
                         cnts.forEach(function(count) {
                             console.log(count.toNumber())
-                            counts.push(count.toNumber()) // TODO: Find a way to make this happen synchronously
+                            counts.push(count.toNumber())
                         }, this)
 
                         $.drawRatingGraph(counts)
