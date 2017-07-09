@@ -263,7 +263,7 @@ window.App = {
                                 console.log('contract rating: ' + contract_rating.toNumber())
                                 if (contract_rating.toNumber() == initial_rating) {
                                     msgResult = 'Rating submitted'
-                                    $.drawRatingGraph()
+                                    $.drawRatingGraphWrapper()
                                 } else {
                                     msgResult = 'Rating submission failed'
                                 }
@@ -275,25 +275,24 @@ window.App = {
         })
     },
 
-    getRatings: function(rating) {
+    getRatings: function() {
         var self = this
-        var counts = []
         Conference.deployed().then(function(instance) {
             conference = instance
             return conference.getRatings.call()
                 .then(
                     function(cnts) {
+                        var counts = []
                         cnts.forEach(function(count) {
                             console.log(count.toNumber())
                             counts.push(count.toNumber()) // TODO: Find a way to make this happen synchronously
-                        }, this);
+                        }, this)
+
+                        $.drawRatingGraph(counts)
                     })
         }).catch(function(e) {
             console.log(e)
         })
-
-        console.log('counts: ' + counts)
-        return counts
     },
 
     destroyContract: function() {
@@ -375,7 +374,7 @@ window.addEventListener('load', function() {
     $('#setRating').click(function() {
         var val = $('#rating').text()
         var buyerAddress = $('#ratingAddress').val()
-        $.drawRatingGraph() // here for testing
+        $.drawRatingGraphWrapper() // here for testing
 
         if (buyerAddress.length != 42)
             $('#ratingResult').html('Please enter a valid address')
@@ -399,53 +398,55 @@ window.addEventListener('load', function() {
         $('#setRating').removeAttr('disabled');
     }); //returns a jQuery Element
 
-    // function to draw a graph of all ratings
-    $.drawRatingGraph = function() {
-        $('#chartdiv').show()
+    $.drawRatingGraphWrapper = function() {
+        App.getRatings()
+    }
 
-        var ratingCounts = App.getRatings()
+    // function to draw a graph of all ratings
+    $.drawRatingGraph = function(ratingCounts) {
+
+        $('#chartdiv').html('')
+        $('#chartdiv').show()
 
         console.log('ratingCounts: ' + ratingCounts)
 
-        // test chart:
-        $.jqplot('chartdiv', [
-            [
-                [0, ratingCounts[0]],
-                [1, ratingCounts[1]],
-                [2, ratingCounts[2]],
-                [3, ratingCounts[3]],
-                [4, ratingCounts[4]],
-                [5, ratingCounts[5]]
-            ]
-        ])
+        //TODO: Fix bar chart:
+        $.jqplot.config.enablePlugins = true;
+        var s1 = ratingCounts
+        var ticks = [0, 1, 2, 3, 4, 5]
 
-        //TODO: Replace test chart with this one:
-
-        /*$.jqplot.config.enablePlugins = true;
-        var s1 = ratingCounts;
-        var ticks = [0, 1, 2, 3, 4, 5];
-
-        plot1 = $.jqplot('chartdiv', [s1], {
-            // Only animate if we're not using excanvas (not in IE 7 or IE 8)..
+        var plot1 = $.jqplot('chartdiv', [s1], {
+            // Only animate if ,we're not using excanvas (not in IE 7 or IE 8)..
             animate: !$.jqplot.use_excanvas,
+            title: 'Ratings Overview',
             seriesDefaults: {
                 renderer: $.jqplot.BarRenderer,
                 pointLabels: {
                     show: true
-                }
+                },
+                rendererOptions: {
+                    barDirection: 'vertical',
+                    highlightMouseDown: true
+                },
+                tickOptions: {
+                    formatString: '%d'
+                },
             },
             axes: {
                 xaxis: {
                     renderer: $.jqplot.CategoryAxisRenderer,
-                    ticks: ticks
-                }
+                    ticks: ticks,
+                    tickOptions: {
+                        formatString: '%d'
+                    }
+                },
             },
             highlighter: {
                 show: false
             }
         });
 
-        $('#chartdiv').bind('jqplotDataClick',
+        /*$('#chartdiv').bind('jqplotDataClick',
             function(ev, seriesIndex, pointIndex, data) {
                 $('#info1').html('series: ' + seriesIndex + ', point: ' + pointIndex + ', data: ' + data);
             }

@@ -6,6 +6,7 @@ contract Conference {
 
   mapping(address => uint) public registrantsPaid;
   mapping(address => uint) public ratingGiven;
+
   uint[] public ratings;
 
   uint public quota;
