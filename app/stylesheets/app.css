@@ -10,6 +10,23 @@ body {
     margin: 20px;
 }
 
+input:read-only {
+    cursor: default;
+}
+
+table,
+th,
+td,
+tr {
+    border: 1px solid black;
+    text-align: center;
+}
+
+th,
+td {
+    padding: 5px;
+}
+
 button {
     padding: 5px 16px;
     border-radius: 4px;

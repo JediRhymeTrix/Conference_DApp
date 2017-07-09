@@ -6,7 +6,7 @@ contract Conference {
 
   mapping(address => uint) public registrantsPaid;
   mapping(address => uint) public ratingGiven;
-  mapping(uint => uint) public ratings;
+  uint[] public ratings;
 
   uint public quota;
   uint public price;
@@ -23,6 +23,8 @@ contract Conference {
     price = 1;
     speaker = spk;
     location = 'Hyderabad';
+    ratings = new uint[](6);
+    ratings = [0, 0, 0, 0, 0, 0];
   }
 
   function changeQuota(uint newquota) public {
@@ -77,12 +79,12 @@ contract Conference {
       return;
     }
 
-    if (ratings[rating] == uint(0x0)) {
-      ratings[rating] = 0;
-    }
-
-    ratings[rating] = ratings[rating] + 1;
+    ratings[rating] += 1;
     ratingGiven[msg.sender] = rating;
+  }
+
+  function getRatings() public returns(uint[] ratingCounts) {
+    return ratings;
   }
 
   function destroy() { // so funds not locked in contract forever

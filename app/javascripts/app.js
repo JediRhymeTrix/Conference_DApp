@@ -61,6 +61,8 @@ window.App = {
         }).catch(function(e) {
             console.log(e)
         })
+
+        $.loadAddresses()
     },
 
     checkValues: function() {
@@ -273,23 +275,25 @@ window.App = {
         })
     },
 
-    getVal: function(rating) {
+    getRatings: function(rating) {
         var self = this
-        var count
+        var counts = []
         Conference.deployed().then(function(instance) {
             conference = instance
-            conference.ratings.call(rating)
+            return conference.getRatings.call()
                 .then(
-                    function(cnt) { // TODO: Find a way to make this happen synchronously
-                        console.log('cnt: ' + cnt.toNumber())
-                        count = cnt
+                    function(cnts) {
+                        cnts.forEach(function(count) {
+                            console.log(count.toNumber())
+                            counts.push(count.toNumber()) // TODO: Find a way to make this happen synchronously
+                        }, this);
                     })
         }).catch(function(e) {
             console.log(e)
         })
 
-        console.log('count: ' + count)
-        return count
+        console.log('counts: ' + counts)
+        return counts
     },
 
     destroyContract: function() {
@@ -397,21 +401,28 @@ window.addEventListener('load', function() {
 
     // function to draw a graph of all ratings
     $.drawRatingGraph = function() {
-        $('#chartdiv').show();
+        $('#chartdiv').show()
 
-        var arrayVals = []
+        var ratingCounts = App.getRatings()
 
-        for (var i = 0; i < 6; i++) {
-            console.log('index: ' + i)
-            arrayVals.push(App.getVal(i))
-        }
+        console.log('ratingCounts: ' + ratingCounts)
 
-        console.log(arrayVals)
+        // test chart:
+        $.jqplot('chartdiv', [
+            [
+                [0, ratingCounts[0]],
+                [1, ratingCounts[1]],
+                [2, ratingCounts[2]],
+                [3, ratingCounts[3]],
+                [4, ratingCounts[4]],
+                [5, ratingCounts[5]]
+            ]
+        ])
 
         //TODO: Replace test chart with this one:
 
         /*$.jqplot.config.enablePlugins = true;
-        var s1 = arrayVals;
+        var s1 = ratingCounts;
         var ticks = [0, 1, 2, 3, 4, 5];
 
         plot1 = $.jqplot('chartdiv', [s1], {
@@ -439,17 +450,13 @@ window.addEventListener('load', function() {
                 $('#info1').html('series: ' + seriesIndex + ', point: ' + pointIndex + ', data: ' + data);
             }
         );*/
+    }
 
-        // test chart:
-        $.jqplot('chartdiv', [
-            [
-                [0, arrayVals[0]],
-                [1, arrayVals[1]],
-                [2, arrayVals[2]],
-                [3, arrayVals[3]],
-                [4, arrayVals[4]],
-                [5, arrayVals[5]]
-            ]
-        ])
+    $.loadAddresses = function() {
+        var index = 0
+
+        accounts.forEach(function(element) {
+            $('#addressTable').append('<tr><td>' + (index++) + '</td><td>' + element + '</td><td>' + Number(getBalance(element)).toFixed(2) + '</td></tr>')
+        }, this);
     }
 })
